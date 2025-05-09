@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dual Clock with Seconds, Minutes, and Hours Hands</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    canvas {
+      background-color: #000;
+      border: 2px solid #444;
+      border-radius: 50%;
+    }
+    #degree-difference {
+      position: absolute;
+      top: 30px;
+      font-size: 1.5rem;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="clock" width="300" height="300"></canvas>
+  <div id="degree-difference"></div>
+  <script>
+    const canvas = document.getElementById("clock");
+    const ctx = canvas.getContext("2d");
+    const radius = canvas.width / 2;
+    ctx.translate(radius, radius);
+
+    function drawClock() {
+      ctx.clearRect(-radius, -radius, canvas.width, canvas.height);
+      drawPassedHand('second');
+      drawRemainingHand('second');
+      drawPassedHand('minute');
+      drawRemainingHand('minute');
+      drawPassedHand('hour');
+      drawRemainingHand('hour');
+      calculateAndDisplayDifference();
+    }
+
+    // Draw passed hand for seconds, minutes, and hours (clockwise)
+    function drawPassedHand(unit) {
+      const now = new Date();
+      let passedAngle;
+
+      if (unit === 'second') {
+        const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+        passedAngle = (Math.PI * 2 * sec) / 60 - Math.PI / 2;
+      } else if (unit === 'minute') {
+        const min = now.getMinutes() + now.getSeconds() / 60;
+        passedAngle = (Math.PI * 2 * min) / 60 - Math.PI / 2;
+      } else if (unit === 'hour') {
+        const hour = now.getHours() + now.getMinutes() / 60;
+        passedAngle = (Math.PI * 2 * hour) / 12 - Math.PI / 2; // 12-hour format
+      }
+
+      const handLength = radius * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(passedAngle) * handLength, Math.sin(passedAngle) * handLength);
+      ctx.strokeStyle = "#ff0000"; // Red for passed time
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    // Draw remaining hand for seconds, minutes, and hours (counterclockwise)
+    function drawRemainingHand(unit) {
+      const now = new Date();
+      let remainingAngle;
+
+      if (unit === 'second') {
+        const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+        const remainingSec = 60 - sec;
+        remainingAngle = (Math.PI * 2 * remainingSec) / 60 - Math.PI / 2;
+      } else if (unit === 'minute') {
+        const min = now.getMinutes() + now.getSeconds() / 60;
+        const remainingMin = 60 - min;
+        remainingAngle = (Math.PI * 2 * remainingMin) / 60 - Math.PI / 2;
+      } else if (unit === 'hour') {
+        const hour = now.getHours() + now.getMinutes() / 60;
+        const remainingHour = 12 - (hour % 12);
+        remainingAngle = (Math.PI * 2 * remainingHour) / 12 - Math.PI / 2; // 12-hour format
+      }
+
+      const handLength = radius * 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(remainingAngle) * handLength, Math.sin(remainingAngle) * handLength);
+      ctx.strokeStyle = "#00ff00"; // Green for remaining time
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    function calculateAndDisplayDifference() {
+      const now = new Date();
+      const sec = now.getSeconds() + now.getMilliseconds() / 1000;
+      const passedSecAngle = (Math.PI * 2 * sec) / 60;
+      const remainingSec = 60 - sec;
+      const remainingSecAngle = (Math.PI * 2 * remainingSec) / 60;
+      const secDiff = Math.abs((passedSecAngle - remainingSecAngle) * 180 / Math.PI);
+
+      const min = now.getMinutes() + now.getSeconds() / 60;
+      const passedMinAngle = (Math.PI * 2 * min) / 60;
+      const remainingMin = 60 - min;
+      const remainingMinAngle = (Math.PI * 2 * remainingMin) / 60;
+      const minDiff = Math.abs((passedMinAngle - remainingMinAngle) * 180 / Math.PI);
+
+      const hour = now.getHours() + now.getMinutes() / 60;
+      const passedHourAngle = (Math.PI * 2 * hour) / 12;
+      const remainingHour = 12 - (hour % 12);
+      const remainingHourAngle = (Math.PI * 2 * remainingHour) / 12;
+      const hourDiff = Math.abs((passedHourAngle - remainingHourAngle) * 180 / Math.PI);
+
+      // Display the difference below the clock
+      document.getElementById("degree-difference").innerHTML = `
+        <p>Seconds Degree Difference: ${secDiff.toFixed(2)}°</p>
+        <p>Minutes Degree Difference: ${minDiff.toFixed(2)}°</p>
+        <p>Hours Degree Difference: ${hourDiff.toFixed(2)}°</p>
+      `;
+    }
+
+    function update() {
+      drawClock();
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>
